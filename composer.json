@@ -19,7 +19,6 @@
     },
     "require": {
         "php": ">=7.1.0",
-        "ext-rdkafka": "^3.0",
         "flix-tech/confluent-schema-registry-api": "^7.0",
         "vlucas/phpdotenv": "*"
     },
