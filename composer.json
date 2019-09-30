@@ -1,0 +1,35 @@
+{
+    "name": "roi-up-agency/php-schema-registry-sync",
+    "description": "Library which synchronize a schema registry schemas and organize it in hierarchical folders for their posterior use",
+    "keywords": ["schema registry"],
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "ROI UP Agency",
+            "email": "jsola@roi-up.es",
+            "homepage": "http://roi-up.es",
+            "role": "Developer"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "SchemaRegistrySync\\": "src/"
+        }
+    },
+    "require": {
+        "php": ">=7.1.0",
+        "ext-rdkafka": "^3.0",
+        "flix-tech/confluent-schema-registry-api": "^7.0",
+        "vlucas/phpdotenv": "*"
+    },
+    "require-dev": {
+
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-master": "1.0-dev"
+        }
+    }
+    
+}
