@@ -20,7 +20,8 @@
     "require": {
         "php": ">=7.2.0",
         "flix-tech/confluent-schema-registry-api": "^7.0",
-        "vlucas/phpdotenv": "*"
+        "vlucas/phpdotenv": "*",
+        "fzaninotto/faker": "1.8.0"
     },
     "require-dev": {
 
@@ -30,5 +31,5 @@
             "dev-master": "1.0-dev"
         }
     }
-    
+
 }

@@ -5,6 +5,11 @@ use FlixTech\SchemaRegistryApi\Registry\PromisingRegistry;
 use FlixTech\SchemaRegistryApi\Test\Requests\FunctionsTest;
 use GuzzleHttp\Client;
 use Psr\Http\Message\ResponseInterface;
+use SchemaRegistrySync\Entities\Field;
+use SchemaRegistrySync\Entities\Schema;
+use SchemaRegistrySync\Entities\Subject;
+use SchemaRegistrySync\Entities\Version;
+use SchemaRegistrySync\Helpers\StrHelper;
 use function FlixTech\SchemaRegistryApi\Requests\allSubjectsRequest;
 use function FlixTech\SchemaRegistryApi\Requests\allSubjectVersionsRequest;
 use function FlixTech\SchemaRegistryApi\Requests\singleSubjectVersionRequest;
@@ -13,6 +18,8 @@ class SchemaRegistrySync
 {
     protected $schemaRegistryUrl;
     protected $client;
+    protected $keyValueDiff = false;
+
     public function __construct($schemaRegistryUrl)
     {
         $this->schemaRegistryUrl = $schemaRegistryUrl;
@@ -23,51 +30,81 @@ class SchemaRegistrySync
 
         $subjects = $this->getSubjects();
 
-        foreach ($subjects as $subject){
-            $versions = $this->getVersions($subject);
-            foreach($versions as $version){
-                $schema = $this->getSchema($subject, $version);
-                dump($schema);
+        $arrSubjects = [];
+
+        foreach ($subjects as $s){
+
+            $topic = $s;
+
+            if(StrHelper::endsWith($s, '-value')){
+                $topic = str_replace('-value', '', $s);
+            }else if(StrHelper::endsWith($s, '-key')){
+                continue;
             }
 
+            $subject = new Subject();
+            $subject->name = $s;
+            $subject->topic = $topic;
+            $subject->versions = [];
+
+            $versions = $this->getVersions($s);
+
+            $arrVersion = [];
+            foreach($versions as $v){
+                $version = new Version();
+
+                $version->version = $v;
+
+
+                $sc = $this->getSchema($s, $v);
+
+                $schema = new Schema();
+                $schema->id = $sc['id'];
+                $scData = json_decode($sc['schema']);
+                $schema->name = $scData->name;
+                $schema->type = $scData->type;
+                $schema->namespace = $scData->namespace;
+                $schema->raw_schema = $sc['schema'];
+
+                $arrFields = [];
+                foreach($scData->fields as $f){
+                    $field = new Field();
+                    $field->name = $f->name;
+                    $field->type = $f->type;
+                    $field->doc  = isset($t->doc) ? $t->doc : '';
+                    $arrFields[] = $field;
+                }
+                $schema->fields = $arrFields;
+
+                $version->schema = $schema;
+
+                $arrVersion[] = $version;
+
+            }
+
+            $subject->versions = $arrVersion;
+
+            $arrSubjects[] = $subject;
         }
 
+        return serialize($arrSubjects);
 
     }
 
     private function getSubjects(){
-
-        $promise = $this->client->sendAsync(allSubjectsRequest());
-
-        $promise->then(
-            static function (ResponseInterface $response){
-                return $response;
-            }
-        );
-
-        $response = $promise->wait();
-
-        return $this->getJsonFromResponseBody($response);
+        return $this->getResponse($this->client->sendAsync(allSubjectsRequest()));
     }
 
     private function getVersions($subject){
-        $promise = $this->client->sendAsync(allSubjectVersionsRequest($subject));
-
-        $promise->then(
-            static function (ResponseInterface $response){
-                return $response;
-            }
-        );
-
-        $response = $promise->wait();
-
-        return $this->getJsonFromResponseBody($response);
-
+        return $this->getResponse($this->client->sendAsync(allSubjectVersionsRequest($subject)));
     }
 
     private function getSchema($subject, $version){
-        $promise = $this->client->sendAsync(singleSubjectVersionRequest($subject, $version));
+        return $this->getResponse($this->client->sendAsync(singleSubjectVersionRequest($subject, $version)));
 
+    }
+
+    private function getResponse($promise){
         $promise->then(
             static function (ResponseInterface $response){
                 return $response;
@@ -77,7 +114,6 @@ class SchemaRegistrySync
         $response = $promise->wait();
 
         return $this->getJsonFromResponseBody($response);
-
     }
 
     public function getSchemaRegistryUrl(){
@@ -96,5 +132,9 @@ class SchemaRegistrySync
                 $e
             );
         }
+    }
+
+    public function setKeyValueDiff(bool $value){
+        $this->keyValueDiff = $value;
     }
 }
