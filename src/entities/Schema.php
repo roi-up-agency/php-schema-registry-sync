@@ -13,12 +13,13 @@ use function FlixTech\SchemaRegistryApi\Requests\singleSubjectVersionRequest;
 class Schema extends EntityAbstract
 {
     protected $fields = [
-        'id'        => '',
-        'fields'    => [],
-        'namespace' => '',
-        'type'      => 'record',
-        'name'      => '',
-        'raw_schema'      => ''
+        'id'            => '',
+        'fields'        => [],
+        'namespace'     => '',
+        'type'          => 'record',
+        'name'          => '',
+        'raw_schema'    => '',
+        'fake_examples' => ''
     ];
 
 

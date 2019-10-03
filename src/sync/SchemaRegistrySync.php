@@ -1,5 +1,5 @@
 <?php
-namespace SchemaRegistrySync\Lib;
+namespace SchemaRegistrySync\Sync;
 
 use FlixTech\SchemaRegistryApi\Registry\PromisingRegistry;
 use FlixTech\SchemaRegistryApi\Test\Requests\FunctionsTest;
@@ -9,6 +9,7 @@ use SchemaRegistrySync\Entities\Field;
 use SchemaRegistrySync\Entities\Schema;
 use SchemaRegistrySync\Entities\Subject;
 use SchemaRegistrySync\Entities\Version;
+use SchemaRegistrySync\Faker\AvroFaker;
 use SchemaRegistrySync\Helpers\StrHelper;
 use function FlixTech\SchemaRegistryApi\Requests\allSubjectsRequest;
 use function FlixTech\SchemaRegistryApi\Requests\allSubjectVersionsRequest;
@@ -19,11 +20,19 @@ class SchemaRegistrySync
     protected $schemaRegistryUrl;
     protected $client;
     protected $keyValueDiff = false;
+    protected $withExamples = false;
+    protected $localizedExamples;
 
     public function __construct($schemaRegistryUrl)
     {
         $this->schemaRegistryUrl = $schemaRegistryUrl;
         $this->client = new Client(['base_uri' => $this->schemaRegistryUrl]);
+    }
+
+    public function withExamples($locale = 'en_US'){
+        $this->localizedExamples = $locale;
+        $this->withExamples = true;
+        return $this;
     }
 
     public function sync(){
@@ -65,6 +74,7 @@ class SchemaRegistrySync
                 $schema->type = $scData->type;
                 $schema->namespace = $scData->namespace;
                 $schema->raw_schema = $sc['schema'];
+                $schema->fake_examples = $this->withExamples ? (new AvroFaker($this->localizedExamples))->generateMultiples(json_decode($sc['schema']), rand(1, 3)) : [];
 
                 $arrFields = [];
                 foreach($scData->fields as $f){
